@@ -6,6 +6,7 @@ which determines unique events while merging
 """
 
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, List, Tuple, Any, Union, Iterator, TYPE_CHECKING
 from dataclasses import dataclass
 
@@ -124,6 +125,70 @@ class ChromeHistory(BaseEvent):
         return (self.url, int(self.dt.timestamp()))
 
 
+@dataclass
+class Contact(BaseEvent):
+    tel: str
+    name: str
+
+    @property
+    def key(self) -> str:
+        return self.tel
+
+    def __str__(self) -> str:
+        if self.name is None or len(self.name) == 0:
+            return self.tel
+        return self.name
+
+
+@dataclass
+class MmsImage(BaseEvent):
+    sources: List[str]
+    message: Optional[str]
+
+    @property
+    def key(self) -> str:
+        return "|".join(self.sources)
+
+    def __str__(self) -> str:
+        if self.message:
+            return f"{self.key}: {self.message}"
+        else:
+            return self.key
+
+
+@dataclass
+class Message(BaseEvent):
+    dt: datetime
+    contact: Contact
+    message: Union[str, MmsImage]
+
+    @property
+    def key(self) -> Tuple[datetime, Contact]:
+        return (self.dt, self.contact)
+
+    def __str__(self) -> str:
+        return f"{datetime.strftime(self.dt, '%c')} - {self.contact}: {self.message}"
+
+
+@dataclass
+class Conversation(BaseEvent):
+    contacts: List[Contact]
+    message: Message
+
+    @property
+    def key(self) -> List[Contact]:
+        return self.contacts
+
+
+@dataclass
+class Jpeg(BaseEvent):
+    path: Path
+
+    @property
+    def key(self) -> Path:
+        return self.path
+
+
 # cant compute this dynamically -- have to write it out
 # if you want to override, override both global variable types with new types
 DEFAULT_MODEL_TYPE = Union[
@@ -133,6 +198,10 @@ DEFAULT_MODEL_TYPE = Union[
     Location,
     ChromeHistory,
     YoutubeComment,
+    Contact,
+    Message,
+    Conversation,
+    Jpeg,
 ]
 
 CacheResults = Iterator[Res[DEFAULT_MODEL_TYPE]]

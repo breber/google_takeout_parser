@@ -28,6 +28,7 @@ from .cache import takeout_cache_path
 from .log import logger
 from .models import BaseEvent
 
+from .parse_html.calls import _parse_html_call, _parse_image
 from .parse_html.activity import _parse_html_activity
 from .parse_html.comment import _parse_html_comment_file
 from .parse_json import (
@@ -37,7 +38,6 @@ from .parse_json import (
     _parse_location_history,
     _parse_chrome_history,
 )
-
 
 # anything that subclasses BaseEvent
 BaseResults = Iterator[Res[BaseEvent]]
@@ -165,6 +165,8 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     r"Saved/Favorite places.csv": None,
     r"Search Contributions/": None,
     r"archive_browser.html": None,  # description of takeout, not that useful
+    r"Voice/Calls/.*?.html": _parse_html_call,
+    r"Voice/Calls/.*?.(jpg|gif)": _parse_image,
 }
 
 HandlerMatch = Res[Optional[HandlerFunction]]
